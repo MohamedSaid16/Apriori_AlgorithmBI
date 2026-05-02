@@ -38,7 +38,6 @@ export default function Home() {
     }
   };
 
-  // Find the largest support value across all itemsets, used for bar scaling
   const maxSupport = result
     ? Math.max(
         1,
@@ -54,10 +53,6 @@ export default function Home() {
       <div className="container">
         <header className="header">
           <h1>Apriori Algorithm — Frequent Itemset Mining</h1>
-          <p>
-            Authors: Ghoulam Mohamed Said &amp; Ounes Abdelfattah Tahar &nbsp;|&nbsp;
-            Teacher: Talbi Omar
-          </p>
         </header>
 
         <section className="card">

@@ -1,20 +1,3 @@
-// =====================================================================
-// Apriori Algorithm - From Scratch (C++)
-// Authors : Ghoulam Mohamed Said & Ounes Abdelfattah Tahar
-// Teacher : Talbi Omar
-// =====================================================================
-// Usage:
-//   apriori.exe <dataset_file> <min_support_count>
-//   Example: apriori.exe dataset.txt 2
-//
-// Dataset format (one transaction per line, items separated by spaces or commas):
-//   bread milk eggs
-//   bread butter
-//   milk eggs butter
-//
-// Output: JSON describing frequent k-itemsets (L1, L2, ...).
-// =====================================================================
-
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -26,14 +9,9 @@
 
 using namespace std;
 
-// A transaction = a set of items (sorted, unique)
 typedef set<string> Transaction;
-// An itemset = a sorted vector of items (so we can compare easily)
 typedef vector<string> Itemset;
 
-// -------------------- Helpers --------------------
-
-// Read the dataset file into a vector of transactions
 vector<Transaction> readTransactions(const string& filename) {
     vector<Transaction> transactions;
     ifstream in(filename);
@@ -43,7 +21,6 @@ vector<Transaction> readTransactions(const string& filename) {
     }
     string line;
     while (getline(in, line)) {
-        // Replace commas with spaces so both formats work
         for (char& c : line) if (c == ',' || c == ';' || c == '\t') c = ' ';
         stringstream ss(line);
         Transaction t;
@@ -56,7 +33,6 @@ vector<Transaction> readTransactions(const string& filename) {
     return transactions;
 }
 
-// Count how many transactions contain the given itemset
 int supportCount(const Itemset& itemset, const vector<Transaction>& transactions) {
     int count = 0;
     for (const auto& t : transactions) {
@@ -69,7 +45,6 @@ int supportCount(const Itemset& itemset, const vector<Transaction>& transactions
     return count;
 }
 
-// Generate L1: frequent 1-itemsets
 vector<Itemset> generateL1(const vector<Transaction>& transactions, int minSup,
                            map<Itemset,int>& support) {
     map<string,int> itemCount;
@@ -89,8 +64,6 @@ vector<Itemset> generateL1(const vector<Transaction>& transactions, int minSup,
     return L1;
 }
 
-// Candidate generation: join Lk-1 with itself to build Ck
-// (Standard Apriori join: two itemsets that share the first k-2 items)
 vector<Itemset> aprioriGen(const vector<Itemset>& Lprev) {
     vector<Itemset> Ck;
     int n = Lprev.size();
@@ -98,13 +71,11 @@ vector<Itemset> aprioriGen(const vector<Itemset>& Lprev) {
 
     for (int i = 0; i < n; i++) {
         for (int j = i + 1; j < n; j++) {
-            // Check that the first k-1 items match
             bool matchPrefix = true;
             for (int p = 0; p < k - 1; p++) {
                 if (Lprev[i][p] != Lprev[j][p]) { matchPrefix = false; break; }
             }
             if (!matchPrefix) continue;
-            // Last items must differ; pick the smaller followed by the bigger
             if (Lprev[i][k-1] >= Lprev[j][k-1]) continue;
 
             Itemset candidate = Lprev[i];
@@ -115,13 +86,11 @@ vector<Itemset> aprioriGen(const vector<Itemset>& Lprev) {
     return Ck;
 }
 
-// Pruning step: remove any candidate that has an infrequent (k-1)-subset
 vector<Itemset> pruneCandidates(const vector<Itemset>& Ck, const vector<Itemset>& Lprev) {
     set<Itemset> Lset(Lprev.begin(), Lprev.end());
     vector<Itemset> pruned;
     for (const auto& c : Ck) {
         bool keep = true;
-        // For each (k-1)-subset of c, check it exists in Lprev
         for (size_t i = 0; i < c.size(); i++) {
             Itemset subset;
             for (size_t j = 0; j < c.size(); j++)
@@ -133,7 +102,6 @@ vector<Itemset> pruneCandidates(const vector<Itemset>& Ck, const vector<Itemset>
     return pruned;
 }
 
-// Escape a string for safe JSON output
 string jsonEscape(const string& s) {
     string out;
     for (char c : s) {
@@ -144,7 +112,6 @@ string jsonEscape(const string& s) {
     return out;
 }
 
-// Print one itemset as a JSON array, e.g. ["bread","milk"]
 string itemsetToJson(const Itemset& s) {
     string out = "[";
     for (size_t i = 0; i < s.size(); i++) {
@@ -155,7 +122,6 @@ string itemsetToJson(const Itemset& s) {
     return out;
 }
 
-// -------------------- Main --------------------
 int main(int argc, char* argv[]) {
     if (argc < 3) {
         cerr << "{\"error\":\"Usage: apriori <dataset> <min_support_count>\"}";
@@ -165,15 +131,12 @@ int main(int argc, char* argv[]) {
     int minSup = atoi(argv[2]);
     if (minSup < 1) minSup = 1;
 
-    // Step 1: read dataset
     vector<Transaction> transactions = readTransactions(filename);
     int N = (int)transactions.size();
 
-    // Step 2: build L1
     map<Itemset,int> support;
     vector<Itemset> L1 = generateL1(transactions, minSup, support);
 
-    // Step 3: iterate L2, L3, ... until empty
     vector<vector<Itemset>> allL;
     allL.push_back(L1);
 
@@ -195,7 +158,6 @@ int main(int argc, char* argv[]) {
         Lprev = Lk;
     }
 
-    // Step 4: output as JSON
     cout << "{";
     cout << "\"transactions\":" << N << ",";
     cout << "\"minSupport\":" << minSup << ",";

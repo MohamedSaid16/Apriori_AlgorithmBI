@@ -1,16 +1,3 @@
-"""
-Flask API bridge between the Next.js frontend and the C++ Apriori binary.
-
-Endpoints:
-    POST /api/run        -> body: multipart form (file 'dataset', field 'minSupport')
-                            or JSON {"text": "...", "minSupport": 2}
-                            returns: JSON results from apriori.exe
-
-Run:
-    pip install flask flask-cors
-    python server.py
-"""
-
 import os
 import json
 import subprocess
@@ -18,12 +5,11 @@ import tempfile
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-# Resolve project root (one level above /backend)
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-APRIORI_BIN = os.path.join(ROOT, "apriori.exe")  # On Linux/Mac use "apriori"
+APRIORI_BIN = os.path.join(ROOT, "apriori.exe")
 
 app = Flask(__name__)
-CORS(app)  # Allow requests from the Next.js dev server
+CORS(app)
 
 
 @app.route("/api/health", methods=["GET"])
@@ -33,7 +19,6 @@ def health():
 
 @app.route("/api/run", methods=["POST"])
 def run_apriori():
-    # 1) Get the dataset content (either uploaded file or pasted text)
     dataset_text = None
     min_support = 2
 
@@ -58,13 +43,11 @@ def run_apriori():
     if min_support < 1:
         min_support = 1
 
-    # 2) Write the dataset to a temporary file so the C++ binary can read it
     tmp = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt", encoding="utf-8")
     try:
         tmp.write(dataset_text)
         tmp.close()
 
-        # 3) Call the C++ binary
         if not os.path.exists(APRIORI_BIN):
             return jsonify({"error": f"Binary not found at {APRIORI_BIN}"}), 500
 
@@ -77,7 +60,6 @@ def run_apriori():
         if proc.returncode != 0:
             return jsonify({"error": "Apriori failed", "stderr": proc.stderr}), 500
 
-        # 4) Parse the JSON output and return it
         try:
             result = json.loads(proc.stdout)
         except json.JSONDecodeError:
@@ -92,5 +74,4 @@ def run_apriori():
 
 
 if __name__ == "__main__":
-    # Bind to localhost on port 5000
     app.run(host="127.0.0.1", port=5000, debug=True)
