@@ -1,0 +1,8 @@
+bread milk eggs
+bread butter
+milk eggs butter
+bread milk butter
+bread milk eggs butter
+milk eggs
+bread eggs
+bread milk
